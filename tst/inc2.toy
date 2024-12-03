@@ -1,0 +1,4 @@
+{ var x = 1;
+  var inc = lambda x: x+1; 
+  print(inc(x))
+}

@@ -1,0 +1,5 @@
+{ var x = 1;
+  var y = 2;
+  var add = lambda x: lambda y: x+y; 
+  print(add(x)(y))
+}

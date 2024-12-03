@@ -1,0 +1,8 @@
+{ var x = 1;
+  var y = 2;
+  def add(x) = { 
+    def helper(y) = { return x+y }; 
+    return helper 
+  };
+  print(add(x)(y))
+}

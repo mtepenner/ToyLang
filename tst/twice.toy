@@ -1,0 +1,4 @@
+{ var twice = lambda f: (lambda z: f(f(z)));
+  var inc = lambda y: y+1; 
+  print(twice(inc)(1))
+}

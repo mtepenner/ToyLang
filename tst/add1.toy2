@@ -1,0 +1,6 @@
+{ def add(x) = { 
+    def helper(y) = { return x+y }; 
+    return helper 
+  };
+  print(add(1)(2))
+}
