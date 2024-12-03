@@ -1,4 +1,4 @@
-# <your name>
+# Matthew Penner
 #
 
 # CS358 Fall'24 Assignment 4 (Part A)
@@ -65,8 +65,40 @@ parser = Lark(grammar, parser='lalr')
 
 # Variable environment
 #
-
-    # ... need code
+class Env(dict):
+    def __init__(self):
+        super().__init__()
+        self.prev = []  
+    def openScope(self):
+        self.prev.append(self.copy())
+        self.clear()
+    def closeScope(self):
+        if not self.prev:
+            raise Exception("No scope to close")
+        restored_scope = self.prev.pop()
+        self.clear()
+        self.update(restored_scope)
+    def extend(self,x,v): 
+        if x in self:
+            raise Exception("Variable '{x}' already defined")
+        self[x] = v
+    def lookup(self,x): 
+        if x in self:
+            return self[x]
+        for env in self.prev:
+            if x in env: return env[x]
+        raise Exception("Variable '{x}' is undefined")
+    def update_self(self,x,v):
+        if x in self:
+            self[x] = v
+            return
+        for env in self.prev:
+            if x in env:
+                env[x] = v
+                return
+        raise Exception("Variable '{x}' is undefined")
+    def display(self, msg):
+        print(msg, self, self.prev)
 
 env = Env()
 
@@ -85,6 +117,51 @@ class Eval(Interpreter):
     def num(self, val):  return int(val)
 
     # ... need code
+    def var(self, name):
+        if name not in self.env:
+            raise ValueError(f"Variable '{name}' is not defined.")
+        return self.env[name]
+    
+    def decl(self, name, value):
+        self.env[name] = self.visit(value)
+    
+    def prstmt(self, value):
+        print(self.visit(value))
+
+    def block(self, *stmts):
+        for stmt in stmts:
+            self.visit(stmt)
+    
+    def add(self, left, right):
+        return self.visit(left) + self.visit(right)
+
+    def sub(self, left, right):
+        return self.visit(left) - self.visit(right)
+
+    def mul(self, left, right):
+        return self.visit(left) * self.visit(right)
+
+    def div(self, left, right):
+        return self.visit(left) // self.visit(right)
+    
+
+    def func(self, param, body):
+        def function(arg):
+            local_env = self.env.copy()
+            local_env[param] = arg
+            original_env = self.env
+            self.env = local_env
+            result = self.visit(body)
+            self.env = original_env
+            return result
+        return function
+
+    def call(self, func, arg):
+        func_eval = self.visit(func)
+        if not callable(func_eval):
+            raise ValueError("Attempt to call a non-function")
+        arg_eval = self.visit(arg)
+        return func_eval(arg_eval)
 
 import sys
 def main():
