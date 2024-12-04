@@ -29,7 +29,7 @@
 #
 from lark import Lark, v_args
 from lark.visitors import Interpreter
-
+import copy
 debug = False
 
 grammar = """
@@ -99,7 +99,6 @@ class Env(dict):
         raise Exception("Variable '{x}' is undefined")
     def display(self, msg):
         print(msg, self, self.prev)
-
 env = Env()
 
 # Closure
@@ -114,6 +113,9 @@ class Closure():
 #
 @v_args(inline=True)
 class Eval(Interpreter):
+    def __init__(self):
+        super().__init__()
+        self.env = env  
     def num(self, val):  return int(val)
 
     # ... need code
@@ -143,26 +145,20 @@ class Eval(Interpreter):
 
     def div(self, left, right):
         return self.visit(left) // self.visit(right)
-    
 
-    def func(self, param, body):
-        def function(arg):
-            local_env = self.env.copy()
-            local_env[param] = arg
-            original_env = self.env
-            self.env = local_env
-            result = self.visit(body)
-            self.env = original_env
-            return result
-        return function
+    def func(self, name, body):
+        return Closure(name, body, env.deep_copy())
 
     def call(self, func, arg):
-        func_eval = self.visit(func)
-        if not callable(func_eval):
-            raise ValueError("Attempt to call a non-function")
-        arg_eval = self.visit(arg)
-        return func_eval(arg_eval)
-
+        func = self.visit(func)
+        temp_env = self.env
+        self.env = func.env
+        self.env.openScope()
+        self.env.extend(func.id, self.visit(arg))
+        result = self.visit(func.body)
+        self.env.closeScope()
+        self.env = temp_env
+        return result
 import sys
 def main():
     try:
