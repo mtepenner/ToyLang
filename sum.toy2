@@ -1,0 +1,10 @@
+{ 
+  def sum(n) = {
+    while (n) {
+      return n + (n-1);
+    };
+  };
+  
+  print(sum(10));
+  print(sum(100))
+} 

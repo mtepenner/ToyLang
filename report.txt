@@ -1,10 +1,11 @@
 Matthew Penner
 
-toylang.py
+toylang.py:
 
 Starting out, when setting up my code, I copied over my Env() code from ImpLang, and made no revisions to it. 
 
-My Eval interpreter followed a similar structure to previous Eval interpreters I have implemented, which feature the same standard operation functions for adding, subtracting, etc. I invoked the Closure class for my func and created a function in Env() that does a deep copy of env.
+My Eval interpreter followed a similar structure to previous Eval interpreters I have implemented, which feature the same standard operation 
+functions for adding, subtracting, etc. I invoked the Closure class for my func and created a function in Env() that does a deep copy of env, which is passed into Closure.
 
 When conducting an initial test of my code, I encountered this error:
 mpenner@MattBook:~/358/assign4$ python3 toylang.py < tst/add1.toy
@@ -22,12 +23,9 @@ mpenner@MattBook:~/358/assign4$ python3 toylang.py < tst/add2.toy
 }
 'Tree' object has no attribute 'env'
 
-I realized that to mitigate this issue, I needed to evaluate func to get the closure object, so I added a line to tackle this in the call function.
-When running it again, I got this error:
-mpenner@MattBook:~/358/assign4$ python3 toylang.py < tst/add2.toy
-{ var x = 1;
-  var y = 2;
-  var add = lambda x: lambda y: x+y;
-  print(add(x)(y))
-}
-Variable 'x' is not defined.    
+I realized that to mitigate this issue, I needed to add a global env to the call function instead.  This, combined with the rest of the Eval functions ported over from ImpLang, were able to make
+the output be as intended.
+
+toylang2.py:
+
+To start out, I copied over the code from toylang to operate as my base. 
