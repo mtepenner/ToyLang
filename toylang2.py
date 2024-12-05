@@ -190,15 +190,15 @@ class Eval(Interpreter):
 
     def call(self, func, arg):
         global env
-        func_val = self.visit(func)
-        arg_val = self.visit(arg)
-        new_env = func_val.env.deep_copy()
+        funcv = self.visit(func)
+        argv = self.visit(arg)
+        new_env = funcv.env.deep_copy()
         new_env.openScope()  
-        new_env.extend(func_val.id, arg_val)
+        new_env.extend(funcv.id, argv)
         temp_env = env
         env = new_env
         try:
-            result = self.visit(func_val.body)
+            result = self.visit(funcv.body)
         finally:
             env = temp_env
         new_env.closeScope()

@@ -28,4 +28,48 @@ the output be as intended.
 
 toylang2.py:
 
-To start out, I copied over the code from toylang to operate as my base. 
+To start out, I copied over the code from toylang to operate as my base. I modified the grammar to match the assignment parameters.  When testing my code, I initially had this issue:
+Traceback (most recent call last):
+  File "/root/358/A4/toylang2.py", line 70, in <module>
+    parser = Lark(grammar, parser='lalr')
+  File "/usr/local/lib/python3.10/dist-packages/lark/lark.py", line 357, in __init__
+    self.grammar, used_files = load_grammar(grammar, self.source_path, self.options.import_paths, self.options.keep_all_tokens)
+  File "/usr/local/lib/python3.10/dist-packages/lark/load_grammar.py", line 1415, in load_grammar
+    builder.load_grammar(grammar, source)
+  File "/usr/local/lib/python3.10/dist-packages/lark/load_grammar.py", line 1240, in load_grammar
+    tree = _parse_grammar(grammar_text, grammar_name)
+  File "/usr/local/lib/python3.10/dist-packages/lark/load_grammar.py", line 966, in _parse_grammar
+    tree = _get_parser().parse(text + '\n', start)
+  File "/usr/local/lib/python3.10/dist-packages/lark/parser_frontends.py", line 104, in parse
+    return self.parser.parse(stream, chosen_start, **kw)
+  File "/usr/local/lib/python3.10/dist-packages/lark/parsers/lalr_parser.py", line 42, in parse
+    return self.parser.parse(lexer, start)
+  File "/usr/local/lib/python3.10/dist-packages/lark/parsers/lalr_parser.py", line 88, in parse
+    return self.parse_from_state(parser_state)
+  File "/usr/local/lib/python3.10/dist-packages/lark/parsers/lalr_parser.py", line 111, in parse_from_state
+    raise e
+  File "/usr/local/lib/python3.10/dist-packages/lark/parsers/lalr_parser.py", line 102, in parse_from_state
+    state.feed_token(token)
+  File "/usr/local/lib/python3.10/dist-packages/lark/parsers/lalr_parser_state.py", line 80, in feed_token
+    raise UnexpectedToken(token, expected, state=self, interactive_parser=None)
+lark.exceptions.UnexpectedToken: Unexpected token Token('_TO', '->') at line 28, column 8.
+Expected one of:
+        * _LBRACE
+        * _DOT
+        * _COLON
+
+I realized I used an arrow instead of a colon here:
+body -> "{" (stmt ";")* "return" expr "}" 
+should actually be
+body: "{" (stmt ";")* "return" expr "}"
+
+The only problem I had with this file afterwards was with figuring out funcdecl, which I eventually realized had only one difference from func, and that
+was instead of returning closure, I invoke extend and pass in the closure function, which I did using a variable.  
+
+Now...time to discuss the toy2 files:
+
+The biggest issue I encountered was this syntax error:
+Unexpected token Token('ID', 'n') at line 4, column 14.
+Expected one of:
+        * EQUAL
+Previous tokens: [Token('ID', 'return')]  
