@@ -99,6 +99,13 @@ class Env(dict):
         raise Exception("Variable '{x}' is undefined")
     def display(self, msg):
         print(msg, self, self.prev)
+    def deep_copy(self):
+        new_env = Env()
+        for key, value in self.items():
+            new_env[key] = copy.deepcopy(value) 
+        new_env.prev = copy.deepcopy(self.prev)
+        return new_env
+
 env = Env()
 
 # Closure
@@ -116,49 +123,67 @@ class Eval(Interpreter):
     def __init__(self):
         super().__init__()
         self.env = env  
-    def num(self, val):  return int(val)
+    def num(self, val):  
+        return int(val)
 
     # ... need code
     def var(self, name):
-        if name not in self.env:
-            raise ValueError(f"Variable '{name}' is not defined.")
-        return self.env[name]
+        return env.lookup(name)
     
     def decl(self, name, value):
-        self.env[name] = self.visit(value)
+        evaluated_value = self.visit(value)
+        env.extend(name, evaluated_value)
     
     def prstmt(self, value):
-        print(self.visit(value))
+        result = self.visit(value)
+        print(result)
 
     def block(self, *stmts):
+        env.openScope()
         for stmt in stmts:
             self.visit(stmt)
+        env.closeScope()
     
     def add(self, left, right):
-        return self.visit(left) + self.visit(right)
+        left_val = self.visit(left)
+        right_val = self.visit(right)
+        return left_val + right_val
 
     def sub(self, left, right):
-        return self.visit(left) - self.visit(right)
+        left_val = self.visit(left)
+        right_val = self.visit(right)
+        return left_val - right_val
 
     def mul(self, left, right):
-        return self.visit(left) * self.visit(right)
+        left_val = self.visit(left)
+        right_val = self.visit(right)
+        return left_val * right_val
 
     def div(self, left, right):
-        return self.visit(left) // self.visit(right)
+        left_val = self.visit(left)
+        right_val = self.visit(right)
+        return left_val // right_val
 
     def func(self, name, body):
-        return Closure(name, body, env.deep_copy())
+        closure_env = env.deep_copy() 
+        return Closure(name, body, closure_env)
 
     def call(self, func, arg):
-        func = self.visit(func)
-        temp_env = self.env
-        self.env = func.env
-        self.env.openScope()
-        self.env.extend(func.id, self.visit(arg))
-        result = self.visit(func.body)
-        self.env.closeScope()
-        self.env = temp_env
+        global env
+        func_val = self.visit(func)
+        arg_val = self.visit(arg)
+        new_env = func_val.env.deep_copy()
+        new_env.openScope()  
+        new_env.extend(func_val.id, arg_val)
+        temp_env = env
+        env = new_env
+        try:
+            result = self.visit(func_val.body)
+        finally:
+            env = temp_env
+        new_env.closeScope()
         return result
+               
 import sys
 def main():
     try:
