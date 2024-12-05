@@ -1,12 +1,13 @@
 {
-  def fac(n) = {
-    if ((n - 0) * (n - 1)) {
-      return 1
-    } else {
-      return n * fac(n - 1)
-    }
-  };
+def fac(n) = {   
+	var f = n;
+	while(n - 1){
+	n = n - 1; 
+      	f = f * n
+    	};
+	return f
+};
 
-  print(fac(5));
-  print(fac(10))
+print(fac(5));
+print(fac(10))
 } 

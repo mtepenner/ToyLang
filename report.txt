@@ -72,4 +72,6 @@ The biggest issue I encountered was this syntax error:
 Unexpected token Token('ID', 'n') at line 4, column 14.
 Expected one of:
         * EQUAL
-Previous tokens: [Token('ID', 'return')]  
+Previous tokens: [Token('ID', 'return')] 
+
+I found out the reason why this was happening was because I was using the incorrect variable in the assign function.  Once I changed this I did not encounter this issue again.  At the time of submission, both functions print out the correct values.  All tests were successful.  However, there is an issue with the outputs, instead of printing out the outputs as an int, it prints them out as a list.  This is an issue I have been unable to resolve at the time of submission.  I thought typecasting could fix this issue, but, at least the way I did it, it made no change to the output. 

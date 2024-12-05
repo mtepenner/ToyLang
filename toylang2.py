@@ -141,8 +141,8 @@ class Eval(Interpreter):
         env.extend(name, evaluated_value)
     
     def assign(self, name, value):
-        evaluated_value = self.visit(value)
-        env.update_self(name, value)
+        evaluated_value = int(Eval().visit(value))
+        env.update_self(name, evaluated_value)
 
     def prstmt(self, value):
         result = self.visit(value)
@@ -161,12 +161,12 @@ class Eval(Interpreter):
             self.visit(false_stmt)
 
     def whstmt(self, condition, body):
-        while condition:
+        while self.visit(condition):
             self.visit(body)
 
     def add(self, left, right):
-        left_val = self.visit(left)
-        right_val = self.visit(right)
+        left_val = int(Eval().visit(left))
+        right_val = int(Eval().visit(right))
         return left_val + right_val
 
     def sub(self, left, right):
