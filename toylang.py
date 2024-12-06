@@ -150,17 +150,13 @@ class Eval(Interpreter):
         return Closure(name, body, env)
 
     def call(self, func, arg):
-        global env
-        temp = env
+        global env 
         closure = self.visit(func)
         argv = self.visit(arg)
-        env = closure.env
-        env.openScope()
+        env = closure.env.openScope()  
         env.extend(closure.id, argv)
         result = self.visit(closure.body)
-
-        temp.closeScope()
-        env = temp
+        env = env.closeScope()
         return result
  
                
