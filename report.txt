@@ -3,7 +3,7 @@ Matthew Penner
 toylang.py:
 
 Starting out, when setting up my code, I copied over my Env() code from ImpLang, and made no revisions to it. I later switched to using a version from an earlier exercise 
-since the source of some of the major problems stemmed from here.
+since the source of some of the major problems stemmed from the version I used.
 
 My Eval interpreter followed a similar structure to previous Eval interpreters I have implemented, which feature the same standard operation 
 functions for adding, subtracting, etc. I invoked the Closure class for my func and created a function in Env() that does a deep copy of env, which is passed into Closure.
@@ -15,7 +15,7 @@ mpenner@MattBook:~/358/assign4$ python3 toylang.py < tst/add1.toy
 }
 'method' object does not support item assignment
 
-The fix for this was to initialize env in the Eval constructor to avoid ambiguity.  When running the code again, I got this error:
+When running the code again, I got this error:
 mpenner@MattBook:~/358/assign4$ python3 toylang.py < tst/add2.toy
 { var x = 1;
   var y = 2;
