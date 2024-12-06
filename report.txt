@@ -76,9 +76,7 @@ Expected one of:
 Previous tokens: [Token('ID', 'return')] 
 
 I found out the reason why this was happening was because I was using the incorrect variable in the assign function.  Once I changed this I did not encounter this 
-issue again.  At the time of submission, both functions print out the correct values.  However, there is an issue with the outputs, instead 
-of printing out the outputs as an int, it prints them out as a list.  I thought typecasting 
-could fix this issue, but, at least the way I did it, it made no change to the output. At the last second, I discovered that not all test cases worked.  When I tested the 
+issue again.  At the time of submission, both functions print out the correct values.  At the last second, I discovered that not all test cases worked.  When I tested the 
 file add2.toy2, I got this error:
 root@MattleStation:~/358/A4# python3 toylang2.py < tst/add2.toy2
 { var x = 1;
@@ -91,6 +89,6 @@ root@MattleStation:~/358/A4# python3 toylang2.py < tst/add2.toy2
 }
 'list' object has no attribute 'env'
 
-I realized the solution was simple: I forgot to implement the body function.  As soon as I did that, all test cases worked perfectly.
+I realized the solution was simple: I forgot to implement the body function.  As soon as I did that, all test cases worked perfectly, and nested functions worked perfectly.
 
 
