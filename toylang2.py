@@ -27,7 +27,7 @@
 #         | ID
 #         | NUM
 #
-from lark import Lark, v_args
+from lark import Lark, v_args, Tree
 from lark.visitors import Interpreter
 import copy
 debug = False
@@ -59,7 +59,7 @@ grammar = """
        | ID             -> var
        | NUM            -> num
 
-  body: "{" (stmt ";")* "return" expr "}"
+  ?body: "{" (stmt ";")* "return" expr "}" -> body
 
   %import common.WORD   -> ID
   %import common.INT    -> NUM
@@ -72,46 +72,28 @@ parser = Lark(grammar, parser='lalr')
 # Variable environment
 #
 class Env(dict):
-    def __init__(self):
-        super().__init__()
-        self.prev = []  
+    prev = []
     def openScope(self):
-        self.prev.append(self.copy())
-        self.clear()
+        self.prev.insert(0,self)
+        return Env()
     def closeScope(self):
-        if not self.prev:
-            raise Exception("No scope to close")
-        restored_scope = self.prev.pop()
-        self.clear()
-        self.update(restored_scope)
-    def extend(self,x,v): 
-        if x in self:
-            raise Exception("Variable '{x}' already defined")
+        return self.prev.pop(0)
+    def extend(self,x,v):
+        assert not x in self, "Variable already defined: " + x
         self[x] = v
-    def lookup(self,x): 
-        if x in self:
-            return self[x]
-        for env in self.prev:
-            if x in env: return env[x]
-        raise Exception("Variable '{x}' is undefined")
-    def update_self(self,x,v):
-        if x in self:
-            self[x] = v
-            return
-        for env in self.prev:
-            if x in env:
-                env[x] = v
-                return
-        raise Exception("Variable '{x}' is undefined")
-    def display(self, msg):
-        print(msg, self, self.prev)
-    def deep_copy(self):
-        new_env = Env()
-        for key, value in self.items():
-            new_env[key] = copy.deepcopy(value) 
-        new_env.prev = copy.deepcopy(self.prev)
-        return new_env
-
+    def lookup(self,x):
+        if x in self: return self[x]
+        for envi in self.prev:
+            if x in envi: return envi[x]
+        raise Exception("Variable undefined: " + x)
+    def retract(self,x):
+        assert x in self, "Undefined variable: " + x
+        self[x].pop(0)
+    def update(self,x,v):
+        if x in self: self[x] = v; return
+        for envi in self.prev:
+            if x in envi: envi[x] = v; return
+        raise Exception("Variable undefined: " + x)
 env = Env()
 
 # Closure
@@ -125,10 +107,11 @@ class Closure():
 # Interpreter
 #
 @v_args(inline=True)
-class Eval(Interpreter):
+class Eval(Interpreter): 
     def __init__(self):
         super().__init__()
-        self.env = env  
+        self.env = env
+
     def num(self, val):  
         return int(val)
 
@@ -141,8 +124,8 @@ class Eval(Interpreter):
         env.extend(name, evaluated_value)
     
     def assign(self, name, value):
-        evaluated_value = int(Eval().visit(value))
-        env.update_self(name, evaluated_value)
+        evaluated_value = self.visit(value)
+        env.update(name, evaluated_value)
 
     def prstmt(self, value):
         result = self.visit(value)
@@ -155,7 +138,7 @@ class Eval(Interpreter):
         env.closeScope()
     
     def ifstmt(self, condition, true_stmt, false_stmt=None):
-        if condition:
+        if self.visit(condition):
             self.visit(true_stmt)
         elif false_stmt is not None:
             self.visit(false_stmt)
@@ -165,8 +148,8 @@ class Eval(Interpreter):
             self.visit(body)
 
     def add(self, left, right):
-        left_val = int(Eval().visit(left))
-        right_val = int(Eval().visit(right))
+        left_val = self.visit(left)
+        right_val = self.visit(right)
         return left_val + right_val
 
     def sub(self, left, right):
@@ -185,29 +168,28 @@ class Eval(Interpreter):
         return left_val // right_val
 
     def func(self, name, body):
-        closure_env = env.deep_copy() 
-        return Closure(name, body, closure_env)
+        return Closure(name, body, env)
 
     def call(self, func, arg):
-        global env
-        funcv = self.visit(func)
+        global env 
+        closure = self.visit(func)
         argv = self.visit(arg)
-        new_env = funcv.env.deep_copy()
-        new_env.openScope()  
-        new_env.extend(funcv.id, argv)
-        temp_env = env
-        env = new_env
-        try:
-            result = self.visit(funcv.body)
-        finally:
-            env = temp_env
-        new_env.closeScope()
+        env = closure.env.openScope()  
+        env.extend(closure.id, argv)
+        result = self.visit(closure.body)
+        env = env.closeScope()
         return result
 
     def funcdecl(self, name, param, body):
-        closure_env = env.deep_copy()
-        closure = Closure(param, body, closure_env)
+        closure = Closure(param, body, env.openScope())
         env.extend(name, closure)
+
+    def body(self, *stmts):
+        for stmt in stmts[:-1]:
+            self.visit(stmt)
+        return self.visit(stmts[-1])
+
+   
 import sys
 def main():
     try:

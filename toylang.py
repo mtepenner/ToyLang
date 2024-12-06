@@ -62,49 +62,31 @@ grammar = """
 """
 
 parser = Lark(grammar, parser='lalr')
-
 # Variable environment
 #
 class Env(dict):
-    def __init__(self):
-        super().__init__()
-        self.prev = []  
+    prev = []
     def openScope(self):
-        self.prev.append(self.copy())
-        self.clear()
+        self.prev.insert(0,self)
+        return Env()
     def closeScope(self):
-        if not self.prev:
-            raise Exception("No scope to close")
-        restored_scope = self.prev.pop()
-        self.clear()
-        self.update(restored_scope)
-    def extend(self,x,v): 
-        if x in self:
-            raise Exception("Variable '{x}' already defined")
+        return self.prev.pop(0)
+    def extend(self,x,v):
+        assert not x in self, "Variable already defined: " + x
         self[x] = v
-    def lookup(self,x): 
-        if x in self:
-            return self[x]
-        for env in self.prev:
-            if x in env: return env[x]
-        raise Exception("Variable '{x}' is undefined")
-    def update_self(self,x,v):
-        if x in self:
-            self[x] = v
-            return
-        for env in self.prev:
-            if x in env:
-                env[x] = v
-                return
-        raise Exception("Variable '{x}' is undefined")
-    def display(self, msg):
-        print(msg, self, self.prev)
-    def deep_copy(self):
-        new_env = Env()
-        for key, value in self.items():
-            new_env[key] = copy.deepcopy(value) 
-        new_env.prev = copy.deepcopy(self.prev)
-        return new_env
+    def lookup(self,x):
+        if x in self: return self[x]
+        for envi in self.prev:
+            if x in envi: return envi[x]
+        raise Exception("Variable undefined: " + x)
+    def retract(self,x):
+        assert x in self, "Undefined variable: " + x
+        self[x].pop(0)
+    def update(self,x,v):
+        if x in self: self[x] = v; return
+        for envi in self.prev:
+            if x in envi: envi[x] = v; return
+        raise Exception("Variable undefined: " + x)
 
 env = Env()
 
@@ -165,24 +147,22 @@ class Eval(Interpreter):
         return left_val // right_val
 
     def func(self, name, body):
-        closure_env = env.deep_copy() 
-        return Closure(name, body, closure_env)
+        return Closure(name, body, env)
 
     def call(self, func, arg):
         global env
-        funcv = self.visit(func)
+        temp = env
+        closure = self.visit(func)
         argv = self.visit(arg)
-        new_env = funcv.env.deep_copy()
-        new_env.openScope()  
-        new_env.extend(funcv.id, argv)
-        temp_env = env
-        env = new_env
-        try:
-            result = self.visit(funcv.body)
-        finally:
-            env = temp_env
-        new_env.closeScope()
+        env = closure.env
+        env.openScope()
+        env.extend(closure.id, argv)
+        result = self.visit(closure.body)
+
+        temp.closeScope()
+        env = temp
         return result
+ 
                
 import sys
 def main():
